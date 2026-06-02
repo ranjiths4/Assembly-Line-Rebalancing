@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ford 8F Line Optimization — Ranjith Sivagnanam</title>
+<meta name="description" content="Optimizing the Ford 8F automatic transmission assembly line at the Livonia plant for reduced volume production through JPH redefinition, labor rebalancing, and future-state process design.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f10;
+    --bg-elev: #15171a;
+    --bg-card: #1a1c20;
+    --ink: #f2efe9;
+    --ink-dim: #a8a59e;
+    --ink-faint: #6b6862;
+    --rule: #2a2c30;
+    --accent: #ff7a1a;
+    --accent-soft: rgba(255, 122, 26, 0.12);
+    --grid: rgba(255, 255, 255, 0.025);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    border-bottom: 1px solid var(--rule);
+    background: rgba(14, 15, 16, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 32px;
+    max-width: 1080px;
+    margin: 0 auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .topbar-name {
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .topbar-meta {
+    color: var(--ink-faint);
+    display: flex;
+    gap: 24px;
+  }
+
+  .topbar-meta a {
+    color: var(--ink-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .topbar-meta a:hover { color: var(--accent); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 96px 0 80px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(36px, 5.4vw, 64px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 32px;
+    max-width: 920px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+    font-variation-settings: "opsz" 144;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-dim);
+    max-width: 680px;
+    margin-bottom: 48px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-num .arrow {
+    color: var(--accent);
+    font-size: 24px;
+    margin: 0 6px;
+    vertical-align: middle;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Section base ---------- */
+  section {
+    padding: 88px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-tag::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 28px;
+    max-width: 760px;
+  }
+
+  .section-lede {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-dim);
+    max-width: 680px;
+    margin-bottom: 48px;
+  }
+
+  /* ---------- Two column ---------- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 56px;
+    margin-bottom: 32px;
+  }
+
+  .two-col-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    padding-top: 4px;
+  }
+
+  .two-col-body {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink-dim);
+  }
+
+  .two-col-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ---------- Approach steps ---------- */
+  .step {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 28px;
+    padding: 28px 0;
+    border-top: 1px solid var(--rule);
+    align-items: start;
+  }
+
+  .step:last-child { border-bottom: 1px solid var(--rule); }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    padding-top: 4px;
+  }
+
+  .step-content h4 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+
+  .step-content p {
+    color: var(--ink-dim);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ---------- Findings grid ---------- */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 32px;
+  }
+
+  .finding-card {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 28px 24px;
+  }
+
+  .finding-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .finding-big {
+    font-family: 'Fraunces', serif;
+    font-size: 40px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .finding-big.accent { color: var(--accent); }
+
+  .finding-text {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+
+  /* ---------- Line breakdown table ---------- */
+  .lines-table {
+    margin-top: 40px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .lines-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 90px 90px 90px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+    gap: 16px;
+  }
+
+  .lines-row.header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 12px 0;
+  }
+
+  .lines-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  .lines-desc {
+    font-size: 14px;
+    color: var(--ink-dim);
+  }
+
+  .lines-num {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+    text-align: right;
+    font-weight: 400;
+  }
+
+  .lines-num.accent { color: var(--accent); }
+
+  /* ---------- Merge example block ---------- */
+  .merge-block {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 32px;
+    margin-top: 40px;
+  }
+
+  .merge-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .merge-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr 100px 80px;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .merge-row:last-child { border-bottom: none; }
+
+  .merge-row.header {
+    color: var(--ink-faint);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-bottom: 12px;
+  }
+
+  .merge-arrow {
+    color: var(--accent);
+    text-align: center;
+  }
+
+  .merge-station { color: var(--ink); }
+
+  .merge-combined { color: var(--ink); text-align: right; }
+
+  .merge-pct {
+    text-align: right;
+    color: var(--accent);
+  }
+
+  /* ---------- Highlights strip ---------- */
+  .highlight-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  .highlight {
+    padding: 32px 28px;
+    border-right: 1px solid var(--rule);
+  }
+
+  .highlight:last-child { border-right: none; }
+
+  .highlight-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .highlight-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+
+  .highlight-body {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+
+  /* ---------- Deliverables list ---------- */
+  .deliv-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 140px;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    align-items: center;
+    gap: 24px;
+  }
+
+  .deliv-row:last-of-type { border-bottom: 1px solid var(--rule); }
+
+  .deliv-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .deliv-content h5 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+
+  .deliv-content p {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+
+  .deliv-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    text-align: right;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Footer ---------- */
+  .footer {
+    padding: 64px 0 48px;
+    border-bottom: none;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+
+  .footer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .footer-body {
+    color: var(--ink-dim);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .footer-body a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+    transition: border-color 0.2s;
+  }
+
+  .footer-body a:hover { border-bottom-color: var(--accent); }
+
+  .footer-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .footer-meta {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px) {
+    .container { padding: 0 20px; }
+    .topbar-inner { padding: 14px 20px; }
+    .topbar-meta { gap: 14px; font-size: 11px; }
+    .hero { padding: 64px 0 56px; }
+    .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .two-col { grid-template-columns: 1fr; gap: 12px; }
+    .findings-grid { grid-template-columns: 1fr; }
+    .highlight-strip { grid-template-columns: 1fr; }
+    .highlight { border-right: none; border-bottom: 1px solid var(--rule); }
+    .highlight:last-child { border-bottom: none; }
+    .lines-row { grid-template-columns: 90px 1fr 60px; gap: 10px; font-size: 13px; }
+    .lines-row > *:nth-child(4),
+    .lines-row > *:nth-child(5) { display: none; }
+    .merge-row { grid-template-columns: 1fr 30px 1fr; gap: 8px; font-size: 11px; }
+    .merge-row > *:nth-child(4),
+    .merge-row > *:nth-child(5) { display: none; }
+    .step { grid-template-columns: 1fr; gap: 8px; padding-left: 0; }
+    .deliv-row { grid-template-columns: 30px 1fr; }
+    .deliv-row > *:nth-child(3) { display: none; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .footer-meta { flex-direction: column; gap: 8px; }
+    section { padding: 56px 0; }
+  }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-name">Ranjith Sivagnanam</div>
+    <div class="topbar-meta">
+      <a href="#overview">Overview</a>
+      <a href="#approach">Approach</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#solution">Solution</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="overview" style="border-top:none;">
+  <div class="container">
+    <div class="hero-tag">IOE 524 Industry Project · Ford Livonia · April 2026</div>
+    <h1 class="hero-title">
+      Rebalancing the Ford 8F transmission line to run <em>1,000 units a day</em> without overtime — by redesigning takt, labor, and station layout.
+    </h1>
+    <p class="hero-sub">
+      A volume-down restructuring of Ford Motor Company's 8F automatic transmission assembly system at the Livonia Transmission Plant, spanning six interconnected sub-lines and 171 stations. Audited every station, mapped the full value stream, and designed a phased consolidation path from 131 active stations down to a theoretical 86.
+    </p>
+
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">1,300<span class="arrow">→</span>1,000</div>
+        <div class="stat-label">Units / Day Target</div>
+      </div>
+      <div>
+        <div class="stat-num">24.71<span class="arrow">→</span>28.8</div>
+        <div class="stat-label">Takt Time (Sec)</div>
+      </div>
+      <div>
+        <div class="stat-num">131<span class="arrow">→</span>86</div>
+        <div class="stat-label">Stations (Theoretical)</div>
+      </div>
+      <div>
+        <div class="stat-num">171</div>
+        <div class="stat-label">Stations Audited</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE PROBLEM ============ -->
+<section id="problem">
+  <div class="container">
+    <div class="section-tag">01 · The problem</div>
+    <h2 class="section-title">A line built for high volume, now staring at a 23% demand cut.</h2>
+    <p class="section-lede">
+      The Ford 8F is an eight-speed automatic transmission used across several vehicle platforms. The Livonia line was designed, staffed, and balanced for roughly 1,300 units per day. Shifting market demand pushed the projected daily volume down to about 1,000 — and without restructuring, the line would carry excess labor, idle stations, and flow imbalances that drive up per-unit cost.
+    </p>
+
+    <div class="two-col">
+      <div class="two-col-label">System</div>
+      <div class="two-col-body">
+        Six interconnected sub-lines: <strong>905</strong> main assembly, <strong>905 OL</strong> offline subassembly, <strong>910</strong> rotating clutch, <strong>907</strong> test &amp; inspection, <strong>935</strong> snap ring &amp; carrier, and <strong>949</strong> MCA. Material flows from inbound storage through subassemblies, into main assembly, through testing, and out to shipment.
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="two-col-label">Constraint</div>
+      <div class="two-col-body">
+        Target rate of 1,000 units/day on a standard <strong>5-day × 8-hour shift</strong>, with <strong>zero overtime dependency</strong>. Three success criteria: balanced workload across stations, cycle times under the derated takt, and the volume target hit within the standard schedule.
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="two-col-label">Sponsor</div>
+      <div class="two-col-body">
+        Ford Motor Company — Livonia Transmission Plant. Project conducted under the IOE 524 Industry Project at the University of Michigan with sponsor review at each major checkpoint.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APPROACH ============ -->
+<section id="approach">
+  <div class="container">
+    <div class="section-tag">02 · Approach</div>
+    <h2 class="section-title">Five phases — from plant access to validated future state.</h2>
+    <p class="section-lede">
+      Worked station-level rather than line-level. Pulled metrics from Ford's internal monitoring systems, validated each station on the shop floor, then built up the analytics: utilization first, value stream second, future-state design third. No proposal went into the deck without being walked back to a process engineer.
+    </p>
+
+    <div class="step">
+      <div class="step-num">PHASE 01</div>
+      <div class="step-content">
+        <h4>Baseline &amp; data access</h4>
+        <p>Onboarding, safety training, IT access provisioning, and plant floor walkthroughs to learn the physical layout and material flow paths of the 8F system.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">PHASE 02</div>
+      <div class="step-content">
+        <h4>Station-level data collection</h4>
+        <p>Pulled cycle time, utilization, reject %, starved %, and availability for every station — manual and automated — and validated each against on-line observation. Output: a complete Operation Information Sheet (OIS) covering 171 stations.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">PHASE 03</div>
+      <div class="step-content">
+        <h4>Current-state VSM &amp; constraint identification</h4>
+        <p>Converted the OIS rows into color-coded process blocks (green = manual, pink = automated), connected them in sequence, and mapped buffers between lines. The VSM made interconnection effects visible — including starvation clustering at line transition boundaries.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">PHASE 04</div>
+      <div class="step-content">
+        <h4>Future-state rebalance design</h4>
+        <p>Recalculated takt for the new volume, computed theoretical station count at 85% utilization, identified adjacent manual stations whose combined cycle time fits the new takt ceiling, and flagged low-CT stations as candidates for work redistribution.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">PHASE 05</div>
+      <div class="step-content">
+        <h4>Validation &amp; sponsor review</h4>
+        <p>Reviewed every proposal with Ford process engineers. Incorporated fixed-automation constraints, quality inspection sequencing, ergonomic limits, and physical layout restrictions into the final recommendations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANALYSIS ============ -->
+<section id="analysis">
+  <div class="container">
+    <div class="section-tag">03 · Analysis</div>
+    <h2 class="section-title">The line wasn't bottlenecked — it was uniformly under-loaded.</h2>
+    <p class="section-lede">
+      No station on the main lines exceeded takt. The problem was uneven loading: some stations at 80%, adjacent ones at 30-50%. That pattern repeated across every sub-line and is the lever the future-state design pulls on.
+    </p>
+
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-label">Line 905 — Main Assembly</div>
+        <div class="finding-big">58<span style="font-size: 20px; color: var(--ink-faint);"> / 69</span></div>
+        <div class="finding-text">Stations operating below the 85% utilization target. Average utilization: <strong style="color: var(--ink);">63.9%</strong>. Twenty stations sit below 60%.</div>
+      </div>
+
+      <div class="finding-card">
+        <div class="finding-label">Lines 905 OL, 910, 907</div>
+        <div class="finding-big">100%</div>
+        <div class="finding-text">Every single station below 85%. The worst — AT_0770_1A on the test line — runs at <strong style="color: var(--ink);">29.8%</strong> with a 7.4s cycle.</div>
+      </div>
+
+      <div class="finding-card">
+        <div class="finding-label">Quality Outliers</div>
+        <div class="finding-big accent">13.74%</div>
+        <div class="finding-text">Reject rate at AT_0770_1B on the test line — flagged for focused quality investigation independent of the rebalancing effort.</div>
+      </div>
+    </div>
+
+    <h3 style="font-family: 'Fraunces', serif; font-weight: 400; font-size: 26px; color: var(--ink); letter-spacing: -0.01em; margin-top: 64px; margin-bottom: 8px;">Line-by-line breakdown</h3>
+    <p style="color: var(--ink-faint); font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.04em;">Station counts and rebalance targets across the 8F system.</p>
+
+    <div class="lines-table">
+      <div class="lines-row header">
+        <div>Line</div>
+        <div>Role</div>
+        <div style="text-align: right;">Existing</div>
+        <div style="text-align: right;">@ 85% Now</div>
+        <div style="text-align: right;">Future Need</div>
+      </div>
+      <div class="lines-row">
+        <div class="lines-name">905</div>
+        <div class="lines-desc">Main assembly</div>
+        <div class="lines-num">69</div>
+        <div class="lines-num">54</div>
+        <div class="lines-num accent">41</div>
+      </div>
+      <div class="lines-row">
+        <div class="lines-name">905 OL</div>
+        <div class="lines-desc">Offline subassembly</div>
+        <div class="lines-num">21</div>
+        <div class="lines-num">15</div>
+        <div class="lines-num accent">15</div>
+      </div>
+      <div class="lines-row">
+        <div class="lines-name">910</div>
+        <div class="lines-desc">Rotating clutch subassembly</div>
+        <div class="lines-num">12</div>
+        <div class="lines-num">8</div>
+        <div class="lines-num accent">8</div>
+      </div>
+      <div class="lines-row">
+        <div class="lines-name">907</div>
+        <div class="lines-desc">Test &amp; inspection (serial)</div>
+        <div class="lines-num">29</div>
+        <div class="lines-num">22</div>
+        <div class="lines-num accent">22</div>
+      </div>
+      <div class="lines-row">
+        <div class="lines-name">Total</div>
+        <div class="lines-desc" style="color: var(--ink-faint);">Across rebalanceable lines</div>
+        <div class="lines-num">131</div>
+        <div class="lines-num">99</div>
+        <div class="lines-num accent">86</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOLUTION ============ -->
+<section id="solution">
+  <div class="container">
+    <div class="section-tag">04 · Future-state design</div>
+    <h2 class="section-title">A phased consolidation built on adjacent-station merges.</h2>
+    <p class="section-lede">
+      The future takt of 28.8 seconds creates a 16.5% headroom over current. Design rule: combined cycle times target 85% of takt — about 24.48 seconds. Merges require manual stations only, physical adjacency, and combined CT within the takt ceiling.
+    </p>
+
+    <div class="highlight-strip">
+      <div class="highlight">
+        <div class="highlight-label">Strategy 01</div>
+        <div class="highlight-title">Recalculate takt &amp; set design target</div>
+        <div class="highlight-body">28.8 sec future takt at 1,000 units/day. Design cycle time: 24.48 sec (85% of takt) to leave a 15% buffer for variability and operator allowances.</div>
+      </div>
+      <div class="highlight">
+        <div class="highlight-label">Strategy 02</div>
+        <div class="highlight-title">Merge adjacent low-load manual stations</div>
+        <div class="highlight-body">Identified 17 specific pairs across all lines. Eight produce combined CT within takt without process improvement — the lowest-risk Phase 1 starting points.</div>
+      </div>
+      <div class="highlight">
+        <div class="highlight-label">Strategy 03</div>
+        <div class="highlight-title">Retain automation as backup capacity</div>
+        <div class="highlight-body">Automated stations stay in place even when underutilized — they provide backup during manual station downtime and represent fixed infrastructure.</div>
+      </div>
+    </div>
+
+    <div class="merge-block">
+      <div class="merge-title">// High-potential merges identified — Line 905</div>
+      <div class="merge-row header">
+        <div>Eliminate</div>
+        <div></div>
+        <div>Merge Into</div>
+        <div style="text-align: right;">Combined CT</div>
+        <div style="text-align: right;">% Takt</div>
+      </div>
+      <div class="merge-row">
+        <div class="merge-station">AT_0340_1B</div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-station">AT_0340_1A</div>
+        <div class="merge-combined">26.49 s</div>
+        <div class="merge-pct">91.9%</div>
+      </div>
+      <div class="merge-row">
+        <div class="merge-station">AT_0250_1B</div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-station">AT_0250_1A</div>
+        <div class="merge-combined">28.06 s</div>
+        <div class="merge-pct">97.4%</div>
+      </div>
+      <div class="merge-row">
+        <div class="merge-station">AT_0020_1B</div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-station">AT_0030_1A</div>
+        <div class="merge-combined">27.73 s</div>
+        <div class="merge-pct">96.0%</div>
+      </div>
+      <div class="merge-row">
+        <div class="merge-station">AT_0190_1A</div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-station">AT_0200_1A</div>
+        <div class="merge-combined">28.46 s</div>
+        <div class="merge-pct">98.8%</div>
+      </div>
+      <div class="merge-row">
+        <div class="merge-station">OL430_0020_1A</div>
+        <div class="merge-arrow">→</div>
+        <div class="merge-station">OL430_0020_1C</div>
+        <div class="merge-combined">28.56 s</div>
+        <div class="merge-pct">99.1%</div>
+      </div>
+    </div>
+
+    <p style="color: var(--ink-dim); font-size: 15px; line-height: 1.65; margin-top: 32px; max-width: 760px;">
+      Beyond paired merges, <strong style="color: var(--ink);">20 manual stations with CT under 15 seconds and utilization below 60%</strong> were flagged as candidates for work redistribution across multiple neighbors rather than a single-partner merge. Plus four clean merges identified on Line 949, where every combined CT fits within the new takt without further process improvement.
+    </p>
+  </div>
+</section>
+
+<!-- ============ DELIVERABLES ============ -->
+<section id="deliverables">
+  <div class="container">
+    <div class="section-tag">05 · Deliverables</div>
+    <h2 class="section-title">Five artifacts handed to Ford for Phase 1 rollout.</h2>
+    <p class="section-lede">
+      Each deliverable was reviewed with Ford process engineers. The plan uses a phased rollout — Phase 1 targets the easiest 4 to 8 merges, with a 4-week monitoring period before Phase 2 expansion based on validated performance against the targets in the report.
+    </p>
+
+    <div class="deliv-row">
+      <div class="deliv-num">01</div>
+      <div class="deliv-content">
+        <h5>OIS Station Audit</h5>
+        <p>Operation Information Sheet covering all 171 stations across six sub-lines — cycle time, takt, utilization, reject %, availability, and starved % per station. The single source of truth for every downstream analysis.</p>
+      </div>
+      <div class="deliv-type">Spreadsheet</div>
+    </div>
+
+    <div class="deliv-row">
+      <div class="deliv-num">02</div>
+      <div class="deliv-content">
+        <h5>Current-State Value Stream Map</h5>
+        <p>End-to-end VSM from inbound storage through all six lines to outbound storage. Color-coded process blocks (green manual / pink auto), inventory triangles at buffer points, full system-level flow.</p>
+      </div>
+      <div class="deliv-type">Diagram</div>
+    </div>
+
+    <div class="deliv-row">
+      <div class="deliv-num">03</div>
+      <div class="deliv-content">
+        <h5>Workload Rebalance Plan</h5>
+        <p>Three-layer plan: theoretical station floor at 85% utilization, 17 specific adjacent-station merge pairs with overflow analysis, and 20 low-CT redistribution candidates. Phased rollout schedule attached.</p>
+      </div>
+      <div class="deliv-type">Plan</div>
+    </div>
+
+    <div class="deliv-row">
+      <div class="deliv-num">04</div>
+      <div class="deliv-content">
+        <h5>Layout Redesign Concept</h5>
+        <p>Physical translation of the rebalance plan onto the existing fixed-pitch conveyor. Eliminated positions repurposed as pass-through, inspection, or material staging. Operator zone and tooling fit checks per merge.</p>
+      </div>
+      <div class="deliv-type">Concept</div>
+    </div>
+
+    <div class="deliv-row">
+      <div class="deliv-num">05</div>
+      <div class="deliv-content">
+        <h5>Future-State Performance Targets</h5>
+        <p>1,000 units/day, 28.8 sec takt, 85% utilization target, &gt;95% availability, zero overtime, on a 5×8 schedule. The benchmark for Phase 1 validation and the go/no-go gate for Phase 2.</p>
+      </div>
+      <div class="deliv-type">Targets</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<section class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-label">Project context</div>
+        <div class="footer-body">
+          <strong>IOE 524 Industry Project</strong> — Industrial &amp; Operations Engineering, University of Michigan, Ann Arbor. Sponsored by Ford Motor Company, Livonia Transmission Plant. April 2026.
+          <br><br>
+          Team: Rahul Vijeyakumar, Ranjith Sivagnanam, Yash Deshpande.
+        </div>
+      </div>
+      <div>
+        <div class="footer-label">Get in touch</div>
+        <div class="footer-body">
+          M.S. Industrial &amp; Operations Engineering · University of Michigan
+          <br><br>
+          <a href="mailto:ranjiths@umich.edu">→ ranjiths@umich.edu</a><br>
+          <a href="#">→ LinkedIn</a><br>
+          <a href="#">→ Full project report (PDF)</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <div>FORD 8F · LIVONIA · 2026</div>
+      <div>RANJITH SIVAGNANAM</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Reveal animation on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('section').forEach(el => {
+    el.classList.add('reveal');
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
